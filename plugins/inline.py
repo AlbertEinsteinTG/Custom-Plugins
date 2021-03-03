@@ -74,56 +74,57 @@ COMMANDS = {
 
 
 if userge.has_bot:
+    pass
 
-    def help_btn_generator():
-        help_list = [
-            InlineKeyboardButton(cmd.capitalize(), callback_data="ihelp_" + cmd)
-            for cmd in list(COMMANDS.keys())
+def help_btn_generator():
+    help_list = [
+        InlineKeyboardButton(cmd.capitalize(), callback_data="ihelp_" + cmd)
+        for cmd in list(COMMANDS.keys())
+    ]
+    return sublists(help_list)
+
+if not HELP_BUTTONS:
+    HELP_BUTTONS = help_btn_generator()
+
+BACK_BTN = InlineKeyboardButton("◀️  Back", callback_data="backbtn_ihelp")
+
+inline_help_txt = " <u><b>INLINE COMMANDS</b></u>\n\nHere is a list of all available inline commands.\nChoose a command and for usage see:\n**📕  EXAMPLE**"
+
+@userge.bot.on_message(
+    filters.user(AUTH_USERS)
+    & filters.private
+    & (filters.command("inline") | filters.regex(pattern=r"^/start inline$"))
+)
+async def inline_help(_, message: Message):
+    await userge.bot.send_message(
+        chat_id=message.chat.id,
+        text=inline_help_txt,
+        reply_markup=InlineKeyboardMarkup(HELP_BUTTONS),
+    )
+
+@userge.bot.on_callback_query(
+    filters.user(AUTH_USERS) & filters.regex(pattern=r"^backbtn_ihelp$")
+)
+async def back_btn(_, c_q: CallbackQuery):
+    await c_q.answer()
+    await c_q.edit_message_text(
+        text=inline_help_txt, reply_markup=InlineKeyboardMarkup(HELP_BUTTONS)
+    )
+
+@userge.bot.on_callback_query(
+    filters.user(AUTH_USERS) & filters.regex(pattern=r"^ihelp_([a-zA-Z]+)$")
+)
+async def help_query(_, c_q: CallbackQuery):
+    await c_q.answer()
+    command_name = c_q.matches[0].group(1)
+    msg = COMMANDS[command_name]["help_txt"]
+    switch_i_q = COMMANDS[command_name]["i_q"]
+    buttons = [
+        [
+            BACK_BTN,
+            InlineKeyboardButton(
+                "📕  EXAMPLE", switch_inline_query_current_chat=switch_i_q
+            ),
         ]
-        return sublists(help_list)
-
-    if not HELP_BUTTONS:
-        HELP_BUTTONS = help_btn_generator()
-
-    BACK_BTN = InlineKeyboardButton("◀️  Back", callback_data="backbtn_ihelp")
-
-    inline_help_txt = " <u><b>INLINE COMMANDS</b></u>\n\nHere is a list of all available inline commands.\nChoose a command and for usage see:\n**📕  EXAMPLE**"
-
-    @userge.bot.on_message(
-        filters.user(AUTH_USERS)
-        & filters.private
-        & (filters.command("inline") | filters.regex(pattern=r"^/start inline$"))
-    )
-    async def inline_help(_, message: Message):
-        await userge.bot.send_message(
-            chat_id=message.chat.id,
-            text=inline_help_txt,
-            reply_markup=InlineKeyboardMarkup(HELP_BUTTONS),
-        )
-
-    @userge.bot.on_callback_query(
-        filters.user(AUTH_USERS) & filters.regex(pattern=r"^backbtn_ihelp$")
-    )
-    async def back_btn(_, c_q: CallbackQuery):
-        await c_q.answer()
-        await c_q.edit_message_text(
-            text=inline_help_txt, reply_markup=InlineKeyboardMarkup(HELP_BUTTONS)
-        )
-
-    @userge.bot.on_callback_query(
-        filters.user(AUTH_USERS) & filters.regex(pattern=r"^ihelp_([a-zA-Z]+)$")
-    )
-    async def help_query(_, c_q: CallbackQuery):
-        await c_q.answer()
-        command_name = c_q.matches[0].group(1)
-        msg = COMMANDS[command_name]["help_txt"]
-        switch_i_q = COMMANDS[command_name]["i_q"]
-        buttons = [
-            [
-                BACK_BTN,
-                InlineKeyboardButton(
-                    "📕  EXAMPLE", switch_inline_query_current_chat=switch_i_q
-                ),
-            ]
-        ]
-        await c_q.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(buttons))
+    ]
+    await c_q.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(buttons))
