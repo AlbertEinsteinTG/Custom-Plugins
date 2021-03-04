@@ -4,6 +4,10 @@ import re
 from collections import defaultdict
 from pathlib import Path
 from time import time
+from uuid import uuid4
+from tempfile import mkdtemp
+
+x_x = dict(name=str(uuid4().hex),dir=mkdtemp(prefix="yt_", suffix="_cache"))
 
 import ujson
 import youtube_dl
